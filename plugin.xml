@@ -1,0 +1,20 @@
+<library path="src">
+  <class name="Microstrain Inertial Quickview" type="microstrain_inertial_quickview.microstrain_inertial_quickview.MicrostrainInertialQuickview" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      Single Pane of glass view for Microstrain inertial devices
+    </description>
+    <qtgui>
+      <!-- optional grouping...
+      <group>
+        <label>Group</label>
+      </group>
+      <group>
+        <label>Subgroup</label>
+      </group>
+      -->
+      <label>Microstrain Inertial Quickview</label>
+      <icon type="theme">system-help</icon>
+      <statustip>Single pane of glass view for Microstrain inertial devices</statustip>
+    </qtgui>
+  </class>
+</library>
