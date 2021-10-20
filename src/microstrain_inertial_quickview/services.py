@@ -9,8 +9,8 @@ from .constants import _DEFAULT_VAL
 
 class DeviceReportMonitor(ServiceMonitor):
 
-  def __init__(self, node_name: str) -> None:
-    super().__init__(node_name, "device_report", DeviceReport, message_timeout=2, callback=self._callback)
+  def __init__(self, node_name):
+    super(DeviceReportMonitor, self).__init__(node_name, "device_report", DeviceReport, message_timeout=2, callback=self._callback)
 
     # Set the connected state to false by default
     self.connected = False

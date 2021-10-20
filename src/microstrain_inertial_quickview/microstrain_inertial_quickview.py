@@ -97,7 +97,7 @@ class MicrostrainInertialQuickview(Plugin):
     del self._gq7_led_monitor
 
     # Call the parent function
-    return super().shutdown_plugin()
+    return super(MicrostrainInertialQuickview, self).shutdown_plugin()
 
   def set_node_name(self):
     # Get the value from the node name text and reinitialize the monitors

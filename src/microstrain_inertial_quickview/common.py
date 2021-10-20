@@ -16,7 +16,11 @@ class MicrostrainServices:
     service_name = os.path.join(self._node_name, service_path)
     try:
       rospy.wait_for_service(service_name, timeout=5)
-    except (rospy.ROSException, rospy.service.ServiceException, rospy.exceptions.TransportException):
+    except rospy.ROSException:
+      return _DEFAULT_VAL
+    except rospy.service.ServiceException:
+      return _DEFAULT_VAL
+    except rospy.exceptions.TransportException:
       return _DEFAULT_VAL
 
     # Call the service, and return the result
@@ -31,9 +35,9 @@ class MicrostrainServices:
       return response
 
 
-class Monitor:
+class Monitor(object):
 
-  def __init__(self, node_name: str, path: str, message_type, message_timeout = _DEFAULT_MESSAGE_TIMEOUT) -> None:
+  def __init__(self, node_name, path, message_type, message_timeout = _DEFAULT_MESSAGE_TIMEOUT):
     # Set up some common variables
     self._node_name = node_name
     self._monitor_path = path
@@ -79,9 +83,9 @@ class Monitor:
 
 class ServiceMonitor(Monitor):
   
-  def __init__(self, node_name: str, path: str, service_type, message_timeout=_DEFAULT_MESSAGE_TIMEOUT, callback=_DEFAULT_VAL, poll_interval=_DEFAULT_POLL_INTERVAL) -> None:
+  def __init__(self, node_name, path, service_type, message_timeout=_DEFAULT_MESSAGE_TIMEOUT, callback=_DEFAULT_VAL, poll_interval=_DEFAULT_POLL_INTERVAL):
     # Initialize the parent class
-    super().__init__(node_name, path, service_type._response_class, message_timeout=message_timeout)
+    super(ServiceMonitor, self).__init__(node_name, path, service_type._response_class, message_timeout=message_timeout)
 
     # Save some important information about the services
     self._service_type = service_type
@@ -95,7 +99,7 @@ class ServiceMonitor(Monitor):
     self._poll_timer = rospy.Timer(rospy.Duration(poll_interval), callback)
   
   def stop(self):
-    super().stop()
+    super(ServiceMonitor, self).stop()
     self._poll_timer.shutdown()
     del self._poll_timer
 
@@ -111,9 +115,9 @@ class ServiceMonitor(Monitor):
 
 class SubscriberMonitor(Monitor):
 
-  def __init__(self, node_name: str, path: str, message_type, message_timeout=_DEFAULT_MESSAGE_TIMEOUT, callback=_DEFAULT_VAL) -> None:
+  def __init__(self, node_name, path, message_type, message_timeout=_DEFAULT_MESSAGE_TIMEOUT, callback=_DEFAULT_VAL):
     # Initialize the parent class
-    super().__init__(node_name, path, message_type, message_timeout=message_timeout)
+    super(SubscriberMonitor, self).__init__(node_name, path, message_type, message_timeout=message_timeout)
 
     # Save th topic name
     self._topic = os.path.join(self._node_name, self._monitor_path)
@@ -124,7 +128,7 @@ class SubscriberMonitor(Monitor):
     self._subscriber = rospy.Subscriber(self._topic, message_type, callback)
 
   def stop(self):
-    super().stop()
+    super(SubscriberMonitor, self).stop()
     self._subscriber.unregister()
     del self._subscriber
 
