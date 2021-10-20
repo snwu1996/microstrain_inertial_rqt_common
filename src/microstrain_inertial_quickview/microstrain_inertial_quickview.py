@@ -1,10 +1,9 @@
 import os
 import re
-import rospy
-import rosgraph
+from threading import Thread
 import python_qt_binding
 from qt_gui.plugin import Plugin
-from .constants import _DEFAULT_STR, _RESOURCE_DIR_NAME, _PACKAGE_DIR
+from .constants import _DEFAULT_STR, _PACKAGE_RESOURCE_DIR
 from .services import DeviceReportMonitor
 from .subscribers import GNSSAidingStatusMonitor, GNSSDualAntennaStatusMonitor, GNSSFixInfoMonitor, FilterStatusMonitor, RTKMonitor, OdomMonitor, ImuMonitor, MagMonitor, FilterAidingMeasurementSummaryMonitor, GQ7LedMonitor
 
@@ -21,9 +20,12 @@ class MicrostrainInertialQuickview(Plugin):
     # Give QObjects reasonable names
     self.setObjectName('MicrostainInertialQuickview')
 
+    # Save a copy of the node
+    self._node = context.node
+
     # Load the UI spec file into a QWidget
     self._widget = python_qt_binding.QtWidgets.QWidget()
-    ui_file = os.path.join(_PACKAGE_DIR, _RESOURCE_DIR_NAME, 'MicrostrainInertialQuickview.ui')
+    ui_file = os.path.join(_PACKAGE_RESOURCE_DIR, 'MicrostrainInertialQuickview.ui')
     python_qt_binding.loadUi(ui_file, self._widget)
     self._widget.setObjectName('MicrostrainInertialQuickview')
 
@@ -113,21 +115,21 @@ class MicrostrainInertialQuickview(Plugin):
       node_name = node_name[:-1]
 
     # Set up the service status monitors
-    self._device_report_monitor = DeviceReportMonitor(node_name)
+    self._device_report_monitor = DeviceReportMonitor(self._node, node_name)
 
     # Set up the subscriber status monitors
-    self._imu_monitor = ImuMonitor(node_name, "imu/data")
-    self._mag_monitor = MagMonitor(node_name, "mag")
-    self._absolute_odom_monitor = OdomMonitor(node_name, "nav/odom", llh=True)
-    self._relative_odom_monitor = OdomMonitor(node_name, "nav/relative_pos/odom", llh=False)
-    self._filter_aiding_status_summary_monitor = FilterAidingMeasurementSummaryMonitor(node_name, "nav/aiding_summary")
-    self._gnss_1_aiding_status_monitor = GNSSAidingStatusMonitor(node_name, "gnss1/aiding_status")
-    self._gnss_2_aiding_status_monitor = GNSSAidingStatusMonitor(node_name, "gnss2/aiding_status")
-    self._gnss_1_fix_info_monitor = GNSSFixInfoMonitor(node_name, "gnss1/fix_info")
-    self._gnss_2_fix_info_monitor = GNSSFixInfoMonitor(node_name, "gnss2/fix_info")
-    self._gnss_dual_antenna_status_monitor = GNSSDualAntennaStatusMonitor(node_name, "nav/dual_antenna_status")
-    self._filter_status_monitor = FilterStatusMonitor(node_name, "nav/status")
-    self._rtk_status_monitor = RTKMonitor(node_name, "rtk/status")
+    self._imu_monitor = ImuMonitor(self._node, node_name, "imu/data")
+    self._mag_monitor = MagMonitor(self._node, node_name, "mag")
+    self._absolute_odom_monitor = OdomMonitor(self._node, node_name, "nav/odom", llh=True)
+    self._relative_odom_monitor = OdomMonitor(self._node, node_name, "nav/relative_pos/odom", llh=False)
+    self._filter_aiding_status_summary_monitor = FilterAidingMeasurementSummaryMonitor(self._node, node_name, "nav/aiding_summary")
+    self._gnss_1_aiding_status_monitor = GNSSAidingStatusMonitor(self._node, node_name, "gnss1/aiding_status")
+    self._gnss_2_aiding_status_monitor = GNSSAidingStatusMonitor(self._node, node_name, "gnss2/aiding_status")
+    self._gnss_1_fix_info_monitor = GNSSFixInfoMonitor(self._node, node_name, "gnss1/fix_info")
+    self._gnss_2_fix_info_monitor = GNSSFixInfoMonitor(self._node, node_name, "gnss2/fix_info")
+    self._gnss_dual_antenna_status_monitor = GNSSDualAntennaStatusMonitor(self._node, node_name, "nav/dual_antenna_status")
+    self._filter_status_monitor = FilterStatusMonitor(self._node, node_name, "nav/status")
+    self._rtk_status_monitor = RTKMonitor(self._node, node_name, "rtk/status")
 
     # Set up a special monitor for the GQ7 LED
     self._gq7_led_monitor = GQ7LedMonitor(self._filter_status_monitor, self._gnss_1_aiding_status_monitor, self._gnss_2_aiding_status_monitor)

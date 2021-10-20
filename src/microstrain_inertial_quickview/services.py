@@ -1,31 +1,19 @@
-import os
-import rospy
 from threading import Thread
 
 from microstrain_inertial_msgs.srv import DeviceReport
 
 from .common import ServiceMonitor
+from .constants import _MICROSTRAIN_ROS_VERISON
 from .constants import _DEFAULT_VAL
 
 class DeviceReportMonitor(ServiceMonitor):
 
-  def __init__(self, node_name):
-    super(DeviceReportMonitor, self).__init__(node_name, "device_report", DeviceReport, message_timeout=2, callback=self._callback)
+  def __init__(self, node, node_name):
+    super(DeviceReportMonitor, self).__init__(node, node_name, "device_report", DeviceReport)
 
-    # Set the connected state to false by default
-    self.connected = False
-
-  def _callback(self, event):
-    # Get the result of the service call
-    new_message = self._microstrain_services.call_service(self._monitor_path, self._service_type)
-
-    # If the service returned an actual value, save the time of success
-    if new_message is not _DEFAULT_VAL:
-      self._current_message = new_message
-      self._last_message_received_time = rospy.Time.now().to_sec()
-
-      # If the service call succeeded, set the connected flag
-      self.connected = self._current_message is not _DEFAULT_VAL
+  @property
+  def connected(self):
+    return self._current_message is not _DEFAULT_VAL and not self._message_timed_out
 
   @property
   def model_name(self):

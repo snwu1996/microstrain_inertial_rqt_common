@@ -1,4 +1,3 @@
-import tf.transformations
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu, MagneticField
 from microstrain_inertial_msgs.msg import GNSSAidingStatus, GNSSFixInfo, GNSSDualAntennaStatus, FilterStatus, RTKStatus, FilterAidingMeasurementSummary
@@ -11,8 +10,8 @@ from .common import SubscriberMonitor
 
 class GNSSAidingStatusMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(GNSSAidingStatusMonitor, self).__init__(node_name, topic_name, GNSSAidingStatus)
+  def __init__(self, node, node_name, topic_name):
+    super(GNSSAidingStatusMonitor, self).__init__(node, node_name, topic_name, GNSSAidingStatus)
 
   @property
   def tight_coupling(self):
@@ -49,8 +48,8 @@ class GNSSAidingStatusMonitor(SubscriberMonitor):
 
 class GNSSFixInfoMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(GNSSFixInfoMonitor, self).__init__(node_name, topic_name, GNSSFixInfo)
+  def __init__(self, node, node_name, topic_name):
+    super(GNSSFixInfoMonitor, self).__init__(node, node_name, topic_name, GNSSFixInfo)
 
   @property
   def fix_type(self):
@@ -89,8 +88,8 @@ class GNSSFixInfoMonitor(SubscriberMonitor):
 
 class FilterStatusMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(FilterStatusMonitor, self).__init__(node_name, topic_name, FilterStatus)
+  def __init__(self, node, node_name, topic_name):
+    super(FilterStatusMonitor, self).__init__(node, node_name, topic_name, FilterStatus)
   
   @property
   def filter_state(self):
@@ -177,8 +176,8 @@ class OdomMonitor(SubscriberMonitor):
 
   _MIN_COVARIANCE_SIZE = 36
 
-  def __init__(self, node_name, topic_name, llh=True):
-    super(OdomMonitor, self).__init__(node_name, topic_name, Odometry, callback=self._callback)
+  def __init__(self, node, node_name, topic_name, llh=True):
+    super(OdomMonitor, self).__init__(node, node_name, topic_name, Odometry, callback=self._callback)
 
     # Use different units if we are using LLH versus ECEF
     if llh:
@@ -193,7 +192,7 @@ class OdomMonitor(SubscriberMonitor):
 
   def _callback(self, status_message):
     quaternion = [self._current_message.pose.pose.orientation.x, self._current_message.pose.pose.orientation.y, self._current_message.pose.pose.orientation.z, self._current_message.pose.pose.orientation.w]
-    self._current_roll, self._current_pitch, self._current_yaw = tf.transformations.euler_from_quaternion(quaternion)
+    self._current_roll, self._current_pitch, self._current_yaw = self._euler_from_quaternion(quaternion)
     super(OdomMonitor, self)._default_callback(status_message)
 
   @property
@@ -313,8 +312,8 @@ class OdomMonitor(SubscriberMonitor):
 
 class GNSSDualAntennaStatusMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(GNSSDualAntennaStatusMonitor, self).__init__(node_name, topic_name, GNSSDualAntennaStatus)
+  def __init__(self, node, node_name, topic_name):
+    super(GNSSDualAntennaStatusMonitor, self).__init__(node, node_name, topic_name, GNSSDualAntennaStatus)
   
   @property
   def fix_type(self):
@@ -378,8 +377,8 @@ class GNSSDualAntennaStatusMonitor(SubscriberMonitor):
 
 class ImuMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(ImuMonitor, self).__init__(node_name, topic_name, Imu)
+  def __init__(self, node, node_name, topic_name):
+    super(ImuMonitor, self).__init__(node, node_name, topic_name, Imu)
 
   @property
   def accel_x(self):
@@ -432,8 +431,8 @@ class ImuMonitor(SubscriberMonitor):
 
 class MagMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(MagMonitor, self).__init__(node_name, topic_name, MagneticField)
+  def __init__(self, node, node_name, topic_name):
+    super(MagMonitor, self).__init__(node, node_name, topic_name, MagneticField)
   
   @property
   def x(self):
@@ -462,8 +461,8 @@ class MagMonitor(SubscriberMonitor):
 
 class RTKMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(RTKMonitor, self).__init__(node_name, topic_name, RTKStatus)
+  def __init__(self, node, node_name, topic_name):
+    super(RTKMonitor, self).__init__(node, node_name, topic_name, RTKStatus)
 
   @property
   def gps_received(self):
@@ -671,8 +670,8 @@ class RTKMonitor(SubscriberMonitor):
 
 class FilterAidingMeasurementSummaryMonitor(SubscriberMonitor):
 
-  def __init__(self, node_name, topic_name):
-    super(FilterAidingMeasurementSummaryMonitor, self).__init__(node_name, topic_name, FilterAidingMeasurementSummary)
+  def __init__(self, node, node_name, topic_name):
+    super(FilterAidingMeasurementSummaryMonitor, self).__init__(node, node_name, topic_name, FilterAidingMeasurementSummary)
 
   @property
   def gnss1_enabled(self):
