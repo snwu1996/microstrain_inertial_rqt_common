@@ -3,6 +3,7 @@ import re
 from threading import Thread
 import python_qt_binding
 from qt_gui.plugin import Plugin
+from .constants import _MICROSTRAIN_ROS_VERISON
 from .constants import _DEFAULT_STR, _PACKAGE_RESOURCE_DIR
 from .services import DeviceReportMonitor
 from .subscribers import GNSSAidingStatusMonitor, GNSSDualAntennaStatusMonitor, GNSSFixInfoMonitor, FilterStatusMonitor, RTKMonitor, OdomMonitor, ImuMonitor, MagMonitor, FilterAidingMeasurementSummaryMonitor, GQ7LedMonitor
@@ -21,7 +22,10 @@ class MicrostrainInertialQuickview(Plugin):
     self.setObjectName('MicrostainInertialQuickview')
 
     # Save a copy of the node
-    self._node = context.node
+    if _MICROSTRAIN_ROS_VERISON == 2:
+      self._node = context.node
+    else:
+      self._node = None
 
     # Load the UI spec file into a QWidget
     self._widget = python_qt_binding.QtWidgets.QWidget()
