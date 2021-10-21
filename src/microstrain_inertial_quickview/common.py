@@ -29,35 +29,22 @@ class MicrostrainServices:
 
     # Different functionality between ROS 1 and ROS 2
     if _MICROSTRAIN_ROS_VERISON == 1:
-      # Wait for the service to become available
-      try:
-        rospy.wait_for_service(service_name, timeout=5.0)
-      except rospy.ROSException:
-        return _DEFAULT_VAL
-      except rospy.service.ServiceException:
-        return _DEFAULT_VAL
-      except rospy.exceptions.TransportException:
-        return _DEFAULT_VAL
-
       # Call the service, and return the result
-      service_func = rospy.ServiceProxy(service_name, service_type)
-      response = service_func(**kwargs)
-      if hasattr(response, 'success'):
-        if response.success:
-          return response
+      try:
+        service_func = rospy.ServiceProxy(service_name, service_type)
+        response = service_func(**kwargs)
+        if hasattr(response, 'success'):
+          if response.success:
+            return response
+          else:
+            return _DEFAULT_VAL
         else:
-          return _DEFAULT_VAL
-      else:
-        return response
+          return response
+      except Exception:
+        return _DEFAULT_VAL
     elif _MICROSTRAIN_ROS_VERISON == 2:
       client = self._node.create_client(service_type, service_name)
 
-      # Wait for the service to become available
-      try:
-        client.wait_for_service(timeout_sec=5.0)
-      except Exception:
-        return _DEFAULT_VAL
-      
       # Copy the kwargs into the service request
       req = service_type.Request()
       for key, value in kwargs.items():
@@ -65,7 +52,10 @@ class MicrostrainServices:
           setattr(req, key, value)
 
       # Call the service and return the result
-      return client.call_async(req)
+      try:
+        return client.call_async(req)
+      except Exception:
+        return _DEFAULT_VAL
       
 
 class Monitor(object):

@@ -3,7 +3,7 @@ from sensor_msgs.msg import Imu, MagneticField
 from microstrain_inertial_msgs.msg import GNSSAidingStatus, GNSSFixInfo, GNSSDualAntennaStatus, FilterStatus, RTKStatus, FilterAidingMeasurementSummary
 
 from .constants import _DEFAULT_VAL, _DEFAULT_STR
-from .constants import _UNIT_DEGREES, _UNIT_GS, _UNIT_GUASSIAN, _UNIT_METERS, _UNIT_RADIANS, _UNIT_RADIANS_PER_SEC
+from .constants import _UNIT_DEGREES, _UNIT_GS, _UNIT_GUASSIAN, _UNIT_METERS, _UNIT_RADIANS, _UNIT_METERS_PER_SEC, _UNIT_RADIANS_PER_SEC
 from .constants import _ICON_GREY_UNCHECKED_MEDIUM, _ICON_YELLOW_UNCHECKED_MEDIUM, _ICON_YELLOW_CHECKED_MEDIUM, _ICON_GREEN_UNCHECKED_MEDIUM,_ICON_GREEN_CHECKED_MEDIUM, _ICON_TEAL_UNCHECKED_MEDIUM, _ICON_TEAL_CHECKED_MEDIUM, _ICON_BLUE_UNCHECKED_MEDIUM, _ICON_BLUE_CHECKED_MEDIUM, _ICON_RED_UNCHECKED_MEDIUM, _ICON_RED_CHECKED_MEDIUM
 from .common import SubscriberMonitor
 
@@ -88,8 +88,11 @@ class GNSSFixInfoMonitor(SubscriberMonitor):
 
 class FilterStatusMonitor(SubscriberMonitor):
 
-  def __init__(self, node, node_name, topic_name):
+  def __init__(self, node, node_name, topic_name, device_report_monitor):
     super(FilterStatusMonitor, self).__init__(node, node_name, topic_name, FilterStatus)
+
+    # Save a copy of the device report monitor
+    self._device_report_monitor = device_report_monitor
   
   @property
   def filter_state(self):
@@ -103,17 +106,29 @@ class FilterStatusMonitor(SubscriberMonitor):
   def filter_state_string(self):
     filter_state = self.filter_state
     if filter_state is not _DEFAULT_VAL:
-      # TODO(robbiefish): Handle GX5 here
-      if filter_state == 1:
-        return "GQ7 Init (%d)" % filter_state
-      elif filter_state == 2:
-        return "GQ7 Vertical Gyro (%d)" % filter_state
-      elif filter_state == 3:
-        return "GQ7 AHRS (%d)" % filter_state
-      elif filter_state == 4:
-        return "GQ7 Full Nav (%d)" % filter_state
+      # Different status codes between GQ7 and GX5
+      if self._device_report_monitor.is_gq7:
+        if filter_state == 1:
+          return "GQ7 Init (%d)" % filter_state
+        elif filter_state == 2:
+          return "GQ7 Vertical Gyro (%d)" % filter_state
+        elif filter_state == 3:
+          return "GQ7 AHRS (%d)" % filter_state
+        elif filter_state == 4:
+          return "GQ7 Full Nav (%d)" % filter_state
+        else:
+          return "GQ7 Invalid (%d)" % filter_state
+      elif self._device_report_monitor.is_gx5:
+        if filter_state == 0:
+          return "GX5 Startup (%d)" % filter_state
+        elif filter_state == 1:
+          return "GX5 Initialization (%d)" % filter_state
+        elif filter_state == 2:
+          return "GX5 Running, Solution Valid (%d)" % filter_state
+        elif filter_state == 3:
+          return "GX5 Running, Solution Error (%d)" % filter_state
       else:
-        return "GQ7 Invalid (%d)" % filter_state
+        return "Unknown Device (%d)" % filter_state
     else:
       return _DEFAULT_STR
 
@@ -130,44 +145,96 @@ class FilterStatusMonitor(SubscriberMonitor):
   def status_flags_string(self):
     status_flags = self.status_flags
     if status_flags is not _DEFAULT_VAL:
-      # TODO(robbiefish): Handle GX5 here
       status_str = ""
+      if self._device_report_monitor.is_gq7:
+        # Filter condition
+        if status_flags & 0b11 == 1:
+          status_str += "Stable,"
+        elif status_flags & 0b11 == 2:
+          status_str += "Converging,"
+        elif status_flags & 0b11 == 3:
+          status_str += "Unstable/Recovering,"
 
-      # Filter condition
-      if status_flags & 0b11 == 1:
-        status_str += "Stable,"
-      elif status_flags & 0b11 == 2:
-        status_str += "Converging,"
-      elif status_flags & 0b11 == 3:
-        status_str += "Unstable/Recovering,"
+        # Estimate Warnings
+        if status_flags & 0b100 != 0:
+          status_str += "Roll/Pitch Warning,"
+        if status_flags & 0b1000 != 0:
+          status_str += "Heading Warning,"
+        if status_flags & 0b10000 != 0:
+          status_str += "Position Warning,"
+        if status_flags & 0b100000 != 0:
+          status_str += "Velocity Warning,"
+        if status_flags & 0b1000000 != 0:
+          status_str += "IMU Bias Warning,"
+        if status_flags & 0b10000000 != 0:
+          status_str += "GNSS Clock Warning,"
+        if status_flags & 0b100000000 != 0:
+          status_str += "Antenna Lever Arm Warning,"
+        if status_flags & 0b1000000000 != 0:
+          status_str += "Mounting Transform Warning,"
+        
+        # Solution Error
+        if status_flags & 0b1111000000000000 != 0:
+          status_str += "Solution Error,"
+      elif self._device_report_monitor.is_gx5:
+        # GX5 needs the filter state to make sense of the status flags
+        filter_state = self.filter_state
+        if filter_state is not _DEFAULT_VAL:
+          # Initialization flags
+          if filter_state == 1:
+            if status_flags & 0b1000000000000 != 0:
+              status_str += "Attutude not initialized,"
+            if status_flags & 0b10000000000000 != 0:
+              status_str += "Position & Velocity not initialized,"
 
-      # Estimate Warnings
-      if status_flags & 0b100 != 0:
-        status_str += "Roll/Pitch Warning,"
-      if status_flags & 0b1000 != 0:
-        status_str += "Heading Warning,"
-      if status_flags & 0b10000 != 0:
-        status_str += "Position Warning,"
-      if status_flags & 0b100000 != 0:
-        status_str += "Velocity Warning,"
-      if status_flags & 0b1000000 != 0:
-        status_str += "IMU Bias Warning,"
-      if status_flags & 0b10000000 != 0:
-        status_str += "GNSS Clock Warning,"
-      if status_flags & 0b100000000 != 0:
-        status_str += "Antenna Lever Arm Warning,"
-      if status_flags & 0b1000000000 != 0:
-        status_str += "Mounting Transform Warning,"
-      
-      # Solution Error
-      if status_flags & 0b1111000000000000 != 0:
-        status_str += "Solution Error,"
+          # Running with error flags
+          elif filter_state in (2, 3):
+            if status_flags & 0b1 != 0:
+              status_str += "IMU unavailable,"
+            if status_flags & 0b10 != 0:
+              status_str += "GNSS,"
+            if status_flags & 0b1000 != 0:
+              status_str += "Matrix Singularity in calculation,"
+            if status_flags & 0b10000 != 0:
+              status_str += "Position covariance high warning,"
+            if status_flags & 0b100000 != 0:
+              status_str += "Velocity covariance high warning,"
+            if status_flags & 0b1000000 != 0:
+              status_str += "Attitude covariance high warning,"
+            if status_flags & 0b10000000 != 0:
+              status_str += "NAN in solution,"
+            if status_flags & 0b100000000 != 0:
+              status_str += "Gyro bias estimate high warning,"
+            if status_flags & 0b1000000000 != 0:
+              status_str += "Accel bias estimate high warning,"
+            if status_flags & 0b10000000000 != 0:
+              status_str += "Gyro scale factor estimate high warning,"
+            if status_flags & 0b100000000000 != 0:
+              status_str += "Accel scale factor estimate high warning,"
+            if status_flags & 0b1000000000000 != 0:
+              status_str += "Mag bias estimate high warning,"
+            if status_flags & 0b10000000000000 != 0:
+              status_str += "GNSS antenna offset correction estimate high warning,"
+            if status_flags & 0b100000000000000 != 0:
+              status_str += "Hard Iron offset estimate high warning,"
+            if status_flags & 0b1000000000000000 != 0:
+              status_str += "Soft iron correction estimate high warning,"
+            if not status_str:
+              status_str = "None,"
+          
+          # No flags if any other case
+          else:
+            status_str = "None,"
+        else:
+          status_str = "Unknown Filter State,"
+      else:
+        status_str = "Uknown Device,"
 
       # Trim the last comma and return
       if status_str:
         return "%s (%d)" % (status_str[:-1], status_flags)
       else:
-        return _DEFAULT_STR
+        return "Unknown Status Flags (%d)" % status_flags
     else:
       return _DEFAULT_STR
     
@@ -262,6 +329,39 @@ class OdomMonitor(SubscriberMonitor):
       return _DEFAULT_VAL
 
   @property
+  def velocity_x(self):
+    return self._get_val(self._current_message.twist.twist.linear.x)
+
+  @property
+  def velocity_y(self):
+    return self._get_val(self._current_message.twist.twist.linear.y)
+
+  @property
+  def velocity_z(self):
+    return self._get_val(self._current_message.twist.twist.linear.z)
+  
+  @property
+  def velocity_uncertainty_x(self):
+    if len(self._current_message.twist.covariance) >= self._MIN_COVARIANCE_SIZE:
+      return self._get_val(self._current_message.twist.covariance[0])
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def velocity_uncertainty_y(self):
+    if len(self._current_message.twist.covariance) >= self._MIN_COVARIANCE_SIZE:
+      return self._get_val(self._current_message.twist.covariance[7])
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def velocity_uncertainty_z(self):
+    if len(self._current_message.twist.covariance) >= self._MIN_COVARIANCE_SIZE:
+      return self._get_val(self._current_message.twist.covariance[14])
+    else:
+      return _DEFAULT_VAL
+
+  @property
   def position_x_string(self):
     return self._get_string_units(self.position_x, self._xy_units)
 
@@ -308,6 +408,30 @@ class OdomMonitor(SubscriberMonitor):
   @property
   def orientation_uncertainty_z_string(self):
     return self._get_string_units(self.orientation_uncertainty_z, _UNIT_RADIANS)
+
+  @property
+  def velocity_x_string(self):
+    return self._get_string_units(self.velocity_x, _UNIT_METERS_PER_SEC)
+
+  @property
+  def velocity_y_string(self):
+    return self._get_string_units(self.velocity_y, _UNIT_METERS_PER_SEC)
+
+  @property
+  def velocity_z_string(self):
+    return self._get_string_units(self.velocity_z, _UNIT_METERS_PER_SEC)
+
+  @property
+  def velocity_uncertainty_x_string(self):
+    return self._get_string_units(self.velocity_uncertainty_x, _UNIT_METERS_PER_SEC)
+
+  @property
+  def velocity_uncertainty_y_string(self):
+    return self._get_string_units(self.velocity_uncertainty_y, _UNIT_METERS_PER_SEC)
+
+  @property
+  def velocity_uncertainty_z_string(self):
+    return self._get_string_units(self.velocity_uncertainty_z, _UNIT_METERS_PER_SEC)
 
 
 class GNSSDualAntennaStatusMonitor(SubscriberMonitor):
