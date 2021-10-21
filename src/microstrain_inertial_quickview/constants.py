@@ -5,12 +5,12 @@ _MICROSTRAIN_ROS_VERISON = 0
 try:
   import rospy
   _MICROSTRAIN_ROS_VERISON = 1
-except ModuleNotFoundError:
+except ImportError:
   pass
 try:
   import rclpy
   _MICROSTRAIN_ROS_VERISON = 2
-except ModuleNotFoundError:
+except ImportError:
   pass
 if _MICROSTRAIN_ROS_VERISON == 0:
   raise Exception("Unable to find ROS1 or ROS2 library")
