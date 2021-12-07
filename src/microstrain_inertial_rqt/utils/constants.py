@@ -21,12 +21,16 @@ if _MICROSTRAIN_ROS_VERISON == 1:
 elif _MICROSTRAIN_ROS_VERISON == 2:
   from ament_index_python.packages import get_package_share_directory
 
-_PACKAGE_NAME = "microstrain_inertial_quickview"
-_RESOURCE_DIR_NAME = "microstrain_inertial_quickview_common/resource"
+_PACKAGE_NAME = "microstrain_inertial_rqt"
+_RESOURCE_DIR_NAME = "microstrain_inertial_rqt_common/resource"
 if _MICROSTRAIN_ROS_VERISON == 1:
   _PACKAGE_RESOURCE_DIR = os.path.join(rospkg.RosPack().get_path(_PACKAGE_NAME), _RESOURCE_DIR_NAME)
 elif _MICROSTRAIN_ROS_VERISON == 2:
   _PACKAGE_RESOURCE_DIR = os.path.join(get_package_share_directory(_PACKAGE_NAME), _RESOURCE_DIR_NAME)
+
+# Environment variable used to configure the default node name for plugins
+_NODE_NAME_ENV_KEY = "MICROSTRAIN_INERTIAL_RQT_NODE_NAME"
+_DEFAULT_NODE_NAME = "gx5"
 
 _DEFAULT_MESSAGE_TIMEOUT = 5
 _DEFAULT_POLL_INTERVAL = 1.0
@@ -55,7 +59,7 @@ _ICON_SIZE_SMALL = (25, 25)
 _ICON_SIZE_MEDIUM = (75, 75)
 
 def _FORM_ICON_STRING(color, size, checked):
-  icon_file = os.path.join(_PACKAGE_RESOURCE_DIR, _ICON_FILE_TEMPLATE % (color, checked))
+  icon_file = os.path.join(_PACKAGE_RESOURCE_DIR, 'icons', _ICON_FILE_TEMPLATE % (color, checked))
   icon_tag_no_size = _ICON_TEMPLATE % icon_file
   return icon_tag_no_size % size
 

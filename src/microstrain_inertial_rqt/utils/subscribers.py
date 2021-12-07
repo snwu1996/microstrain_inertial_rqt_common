@@ -1,5 +1,5 @@
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import Imu, MagneticField
+from sensor_msgs.msg import Imu, MagneticField, NavSatFix
 from microstrain_inertial_msgs.msg import GNSSAidingStatus, GNSSFixInfo, GNSSDualAntennaStatus, FilterStatus, RTKStatus, FilterAidingMeasurementSummary
 
 from .constants import _DEFAULT_VAL, _DEFAULT_STR
@@ -581,6 +581,25 @@ class MagMonitor(SubscriberMonitor):
   @property
   def z_string(self):
     return self._get_string_units(self.z, _UNIT_GUASSIAN)
+
+
+class NavSatFixMonitor(SubscriberMonitor):
+
+  _MIN_COVARIANCE_SIZE = 9
+
+  def __init__(self, node, node_name, topic_name):
+    super(NavSatFixMonitor, self).__init__(node, node_name, topic_name, NavSatFix)
+
+  @property
+  def position_uncertainty(self):
+    if len(self._current_message.position_covariance) >= self._MIN_COVARIANCE_SIZE:
+      return self._get_val(self._current_message.position_covariance[0])
+    else:
+      return _DEFAULT_VAL
+  
+  @property
+  def position_uncertainty_string(self):
+    return self._get_string_units(self.position_uncertainty, _UNIT_METERS)
 
 
 class RTKMonitor(SubscriberMonitor):

@@ -1,4 +1,7 @@
 import os
+import re
+import qt_gui.plugin
+import python_qt_binding
 
 # ROS version specific imports
 from .constants import _MICROSTRAIN_ROS_VERISON
@@ -13,6 +16,8 @@ elif _MICROSTRAIN_ROS_VERISON == 2:
   from rclpy.callback_groups import ReentrantCallbackGroup
   import transforms3d.euler
 
+from .constants import _PACKAGE_RESOURCE_DIR
+from .constants import _NODE_NAME_ENV_KEY, _DEFAULT_NODE_NAME
 from .constants import _DEFAULT_MESSAGE_TIMEOUT, _DEFAULT_POLL_INTERVAL, _DEFAULT_VAL, _DEFAULT_STR
 from .constants import _ICON_GREY_UNCHECKED_SMALL, _ICON_GREEN_UNCHECKED_SMALL
 
@@ -193,7 +198,6 @@ class ServiceMonitor(Monitor):
   def _current_message(self, current_message):
     if _MICROSTRAIN_ROS_VERISON == 1:
       self._current_response = current_message
-
 
 
 class SubscriberMonitor(Monitor):
