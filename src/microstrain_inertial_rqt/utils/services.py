@@ -9,7 +9,7 @@ from .constants import _DEFAULT_VAL
 class DeviceReportMonitor(ServiceMonitor):
 
   def __init__(self, node, node_name):
-    super(DeviceReportMonitor, self).__init__(node, node_name, "device_report", DeviceReport)
+    super(DeviceReportMonitor, self).__init__(node, node_name, "device_report", DeviceReport, message_timeout=25, poll_interval=5)
 
     # Keep track of some booleans so that we can keep track between disconnects
     self._is_gq7 = False

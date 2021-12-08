@@ -137,6 +137,7 @@ class ServiceMonitor(Monitor):
       super(ServiceMonitor, self).__init__(node, node_name, path, service_type.Response, message_timeout=message_timeout)
       self._current_future = rclpy.Future()
       self._current_future._done = False
+      self._current_response = service_type.Response()
 
     # Save some important information about the services
     self._service_type = service_type
@@ -152,6 +153,9 @@ class ServiceMonitor(Monitor):
       self._poll_timer = rospy.Timer(rospy.Duration(poll_interval), callback)
     elif _MICROSTRAIN_ROS_VERISON == 2:
       self._poll_timer = self._node.create_timer(poll_interval, callback)
+    
+    # Apparently ros timers will wait until executing the timer for the first time, so just execute it once here
+    callback()
   
   def stop(self):
     super(ServiceMonitor, self).stop()
@@ -175,29 +179,24 @@ class ServiceMonitor(Monitor):
   
   @property
   def _current_message(self):
-    if _MICROSTRAIN_ROS_VERISON == 1:
-      return self._current_response
-    elif _MICROSTRAIN_ROS_VERISON == 2:
+    # In ROS2, we need to get the result of the service call here if it is present
+    if _MICROSTRAIN_ROS_VERISON == 2:
       if self._current_future.done():
         response = self._current_future.result()
         if hasattr(response, 'success'):
           if response.success:
             self._last_message_received_time = self._ros_time()
-            return response
-          else:
-            return self._service_type.Response()
+            self._current_response = response
         else:
           self._last_message_received_time = self._ros_time()
-          return response
-      else:
-        return self._service_type.Response()
-    else:
-      return _DEFAULT_VAL
+          self._current_response = response
+    
+    # Now that the current response has been updated for ROS2, and was already updated for ROS, return it
+    return self._current_response
   
   @_current_message.setter
   def _current_message(self, current_message):
-    if _MICROSTRAIN_ROS_VERISON == 1:
-      self._current_response = current_message
+    self._current_response = current_message
 
 
 class SubscriberMonitor(Monitor):
