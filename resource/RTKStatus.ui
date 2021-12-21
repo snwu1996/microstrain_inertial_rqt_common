@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>416</width>
-    <height>440</height>
+    <height>407</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -387,13 +387,6 @@
                 </layout>
                </item>
               </layout>
-             </item>
-             <item row="5" column="0">
-              <widget class="QLabel" name="label_32">
-               <property name="text">
-                <string>&lt;a target=&quot;_blank&quot; href=&quot;https://icons8.com/icon/33946/connection-status-on&quot;&gt;Connection Status On&lt;/a&gt; icon by &lt;a target=&quot;_blank&quot; href=&quot;https://icons8.com&quot;&gt;Icons8&lt;/a&gt;</string>
-               </property>
-              </widget>
              </item>
             </layout>
            </widget>
