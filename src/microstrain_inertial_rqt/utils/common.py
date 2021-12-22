@@ -1,5 +1,6 @@
 import os
 import re
+import math
 import qt_gui.plugin
 import python_qt_binding
 
@@ -7,14 +8,12 @@ import python_qt_binding
 from .constants import _MICROSTRAIN_ROS_VERISON
 if _MICROSTRAIN_ROS_VERISON == 1:
   import rospy
-  import tf.transformations
 elif _MICROSTRAIN_ROS_VERISON == 2:
   import rclpy
   import rclpy.exceptions
   import rclpy.time
   import rclpy.timer
   from rclpy.callback_groups import ReentrantCallbackGroup
-  import transforms3d.euler
 
 from .constants import _PACKAGE_RESOURCE_DIR
 from .constants import _NODE_NAME_ENV_KEY, _DEFAULT_NODE_NAME
@@ -86,12 +85,27 @@ class Monitor(object):
       return 0
 
   def _euler_from_quaternion(self, quaternion):
-    if _MICROSTRAIN_ROS_VERISON == 1:
-      return tf.transformations.euler_from_quaternion(quaternion)
-    elif _MICROSTRAIN_ROS_VERISON == 2:
-      return transforms3d.euler.quat2euler(quaternion)
+    # Formula copied and adapted from https://en.wikipedia.org/wiki/Conversion_between_quaternions_and_Euler_angles
+    q_x = quaternion[0]
+    q_y = quaternion[1]
+    q_z = quaternion[2]
+    q_w = quaternion[3]
+
+    sinr_cosp = 2 * (q_w * q_x + q_y * q_z)
+    cosr_cosp = 1- 2 * (q_x * q_x + q_y * q_y)
+    roll = math.atan2(sinr_cosp, cosr_cosp)
+
+    sinp = 2 * (q_w * q_y - q_z * q_x)
+    if math.fabs(sinp) >= 1:
+      pitch = math.copysign(math.pi / 2, sinp)
     else:
-      return (0.0, 0.0, 0.0)
+      pitch = math.asin(sinp)
+    
+    siny_cosp = 2 * (q_w * q_z + q_x * q_y)
+    cosy_cosp = 1 - 2 * (q_y * q_y + q_z * q_z)
+    yaw = math.atan2(siny_cosp, cosy_cosp)
+
+    return (roll, pitch, yaw)
 
   @property
   def _message_timed_out(self):
