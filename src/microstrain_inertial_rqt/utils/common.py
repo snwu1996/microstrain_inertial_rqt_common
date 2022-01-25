@@ -129,6 +129,12 @@ class Monitor(object):
       return default_str
     else:
       return "%.6f %s" % (val, units)
+
+  def _get_string_hex(self, val, default_val = _DEFAULT_VAL, default_str = _DEFAULT_STR):
+    if (val is default_val or self._get_val(val, default_val) is default_val):
+      return default_str
+    else:
+      return hex(val)
   
   def _get_small_boolean_icon_string(self, val, default_val = _DEFAULT_VAL):
     if val is default_val or self._get_val(val, default_val) is default_val:
@@ -138,6 +144,15 @@ class Monitor(object):
         return _ICON_GREEN_UNCHECKED_SMALL
       else:
         return _ICON_GREY_UNCHECKED_SMALL
+  
+  def _get_boolean_string(self, val, default_val = _DEFAULT_VAL):
+    if val is default_val or self._get_val(val, default_val) is default_val:
+      return "Unknown"
+    else:
+      if val:
+        return "Yes"
+      else:
+        return "No"
 
 
 class ServiceMonitor(Monitor):

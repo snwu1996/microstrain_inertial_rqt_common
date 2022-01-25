@@ -30,7 +30,7 @@ elif _MICROSTRAIN_ROS_VERISON == 2:
 
 # Environment variable used to configure the default node name for plugins
 _NODE_NAME_ENV_KEY = "MICROSTRAIN_INERTIAL_RQT_NODE_NAME"
-_DEFAULT_NODE_NAME = "gx5"
+_DEFAULT_NODE_NAME = "/"
 
 _DEFAULT_MESSAGE_TIMEOUT = 5
 _DEFAULT_POLL_INTERVAL = 1.0

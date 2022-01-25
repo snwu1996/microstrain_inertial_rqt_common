@@ -1,6 +1,6 @@
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import Imu, MagneticField, NavSatFix
-from microstrain_inertial_msgs.msg import GNSSAidingStatus, GNSSFixInfo, GNSSDualAntennaStatus, FilterStatus, RTKStatus, FilterAidingMeasurementSummary
+from microstrain_inertial_msgs.msg import GNSSAidingStatus, GNSSFixInfo, GNSSDualAntennaStatus, FilterStatus, RTKStatusV1, RTKStatus, FilterAidingMeasurementSummary
 
 from .constants import _DEFAULT_VAL, _DEFAULT_STR
 from .constants import _UNIT_DEGREES, _UNIT_GS, _UNIT_GUASSIAN, _UNIT_METERS, _UNIT_RADIANS, _UNIT_METERS_PER_SEC, _UNIT_RADIANS_PER_SEC
@@ -602,10 +602,10 @@ class NavSatFixMonitor(SubscriberMonitor):
     return self._get_string_units(self.position_uncertainty, _UNIT_METERS)
 
 
-class RTKMonitor(SubscriberMonitor):
+class RTKMonitorBase(SubscriberMonitor):
 
-  def __init__(self, node, node_name, topic_name):
-    super(RTKMonitor, self).__init__(node, node_name, topic_name, RTKStatus)
+  def __init__(self, node, node_name, topic_name, message_type):
+    super(RTKMonitorBase, self).__init__(node, node_name, topic_name, message_type)
 
   @property
   def gps_received(self):
@@ -638,26 +638,14 @@ class RTKMonitor(SubscriberMonitor):
       return epoch_status & 0b100000 != 0
     else:
       return _DEFAULT_VAL
-
-  @property
-  def controller_state(self):
-    return self._get_val(self._current_message.dongle_controller_state)
-
-  @property
-  def controller_status(self):
-    return self._get_val(self._current_message.dongle_controller_status)
-
-  @property
-  def platform_state(self):
-    return self._get_val(self._current_message.dongle_platform_state)
   
   @property
-  def platform_status(self):
-    return self._get_val(self._current_message.dongle_platform_status)
+  def version(self):
+    return self._get_val(self._current_message.dongle_version)
 
   @property
-  def reset_reason(self):
-    return self._get_val(self._current_message.dongle_reset_reason)
+  def raw_status_flags(self):
+    return self._get_val(self._current_message.raw_status_flags)
 
   @property
   def signal_quality(self):
@@ -678,6 +666,215 @@ class RTKMonitor(SubscriberMonitor):
   @property
   def beidou_received_string(self):
     return self._get_small_boolean_icon_string(self.beidou_received)
+
+  @property
+  def version_string(self):
+    return self._get_string(self.version)
+
+  @property
+  def raw_status_flags_string(self):
+    return self._get_string_hex(self.raw_status_flags)
+
+  @property
+  def signal_quality_string(self):
+    return self._get_string(self.signal_quality)
+  
+  @property
+  def rtk_led_string(self):
+    pass
+
+
+class RTKMonitor(RTKMonitorBase):
+
+  def __init__(self, node, node_name, topic_name):
+    super(RTKMonitor, self).__init__(node, node_name, topic_name, RTKStatus)
+
+  @property
+  def modem_state(self):
+    return self._get_val(self._current_message.dongle_modem_state)
+
+  @property
+  def connection_type(self):
+    return self._get_val(self._current_message.dongle_connection_type)
+
+  @property
+  def rssi(self):
+    rssi = self._current_message.dongle_rssi
+    if rssi is not _DEFAULT_VAL:
+      return -rssi
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def tower_change_indicator(self):
+    tower_change_indicator = self._current_message.dongle_tower_change_indicator
+    if tower_change_indicator is not _DEFAULT_VAL:
+      return tower_change_indicator
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def nmea_timeout(self):
+    nmea_timeout = self._current_message.dongle_nmea_timeout
+    if nmea_timeout is not _DEFAULT_VAL:
+      return nmea_timeout
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def server_timeout(self):
+    server_timeout = self._current_message.dongle_server_timeout
+    if server_timeout is not _DEFAULT_VAL:
+      return server_timeout
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def rtcm_timeout(self):
+    rtcm_timeout = self._current_message.dongle_rtcm_timeout
+    if rtcm_timeout is not _DEFAULT_VAL:
+      return rtcm_timeout
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def out_of_range(self):
+    out_of_range = self._current_message.dongle_out_of_range
+    if out_of_range is not _DEFAULT_VAL:
+      return out_of_range
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def corrections_unavailable(self):
+    corrections_unavailable = self._current_message.dongle_corrections_unavailable
+    if corrections_unavailable is not _DEFAULT_VAL:
+      return corrections_unavailable
+    else:
+      return _DEFAULT_VAL
+
+  @property
+  def modem_state_string(self):
+    modem_state = self.modem_state
+    if modem_state is not _DEFAULT_VAL:
+      if modem_state == self._current_message.MODEM_STATE_OFF:
+        return "Off (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_NO_NETWORK:
+        return "No Network (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_NETWORK_CONNECTED:
+        return "Connected (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_CONFIGURING_DATA_CONTEXT:
+        return "Configuring Data Context (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_ACTIVATING_DATA_CONTEXT:
+        return "Activating Data Context (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_CONFIGURING_SOCKET:
+        return "Configuring Socket (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_WAITING_ON_SERVER_HANDSHAKE:
+        return "Waiting on Server Handshake (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_CONNECTED_AND_IDLE:
+        return "Connected & Idle (%d)" % modem_state
+      elif modem_state == self._current_message.MODEM_STATE_CONNECTED_AND_STREAMING:
+        return "Connected & Streaming (%d)" % modem_state
+      else:
+        return "Invalid (%d)" % modem_state
+    else:
+      return _DEFAULT_STR
+
+  @property
+  def connection_type_string(self):
+    connection_type = self.connection_type
+    if connection_type is not _DEFAULT_VAL:
+      if connection_type == self._current_message.CONNECTION_TYPE_NO_CONNECTION:
+        return "No Connection (%d)" % connection_type
+      elif connection_type == self._current_message.CONNECTION_TYPE_CONNECTION_2G:
+        return "2G (%d)" % connection_type
+      elif connection_type == self._current_message.CONNECTION_TYPE_CONNECTION_3G:
+        return "3G (%d)" % connection_type
+      elif connection_type == self._current_message.CONNECTION_TYPE_CONNECTION_4G:
+        return "4G (%d)" % connection_type
+      elif connection_type == self._current_message.CONNECTION_TYPE_CONNECTION_5G:
+        return "5G (%d)" % connection_type
+      else:
+        return "Invalid (%d)" % connection_type
+    else:
+      return _DEFAULT_STR
+
+  @property
+  def rssi_string(self):
+    return self._get_string(self.rssi)
+
+  @property
+  def tower_change_indicator_string(self):
+    return self._get_string(self.tower_change_indicator)
+
+  @property
+  def nmea_timeout_string(self):
+    return self._get_boolean_string(self.nmea_timeout)
+
+  @property
+  def server_timeout_string(self):
+    return self._get_boolean_string(self.server_timeout)
+
+  @property
+  def rtcm_timeout_string(self):
+    return self._get_boolean_string(self.rtcm_timeout)
+
+  @property
+  def out_of_range_string(self):
+    return self._get_boolean_string(self.out_of_range)
+
+  @property
+  def corrections_unavailable_string(self):
+    return self._get_boolean_string(self.corrections_unavailable)
+
+  @property
+  def rtk_led_string(self):
+    modem_state = self.modem_state
+    if modem_state is not _DEFAULT_VAL:      
+      if modem_state == self._current_message.MODEM_STATE_NO_NETWORK:
+        return _ICON_YELLOW_UNCHECKED_MEDIUM
+      elif modem_state == self._current_message.MODEM_STATE_NETWORK_CONNECTED:
+        return _ICON_GREEN_CHECKED_MEDIUM
+      elif modem_state == self._current_message.MODEM_STATE_CONFIGURING_DATA_CONTEXT:
+        return _ICON_GREEN_CHECKED_MEDIUM
+      elif modem_state == self._current_message.MODEM_STATE_ACTIVATING_DATA_CONTEXT:
+        return _ICON_GREEN_CHECKED_MEDIUM
+      elif modem_state == self._current_message.MODEM_STATE_CONFIGURING_SOCKET:
+        return _ICON_GREEN_CHECKED_MEDIUM
+      elif modem_state == self._current_message.MODEM_STATE_WAITING_ON_SERVER_HANDSHAKE:
+        return _ICON_GREEN_CHECKED_MEDIUM
+      elif modem_state == self._current_message.MODEM_STATE_CONNECTED_AND_IDLE:
+        return _ICON_BLUE_CHECKED_MEDIUM
+      elif modem_state == self._current_message.MODEM_STATE_CONNECTED_AND_STREAMING:
+        return _ICON_BLUE_CHECKED_MEDIUM
+    else:
+      return _ICON_GREY_UNCHECKED_MEDIUM
+
+
+class RTKMonitorV1(RTKMonitorBase):
+
+  def __init__(self, node, node_name, topic_name):
+    super(RTKMonitorV1, self).__init__(node, node_name, topic_name, RTKStatusV1)
+
+  @property
+  def controller_state(self):
+    return self._get_val(self._current_message.dongle_controller_state)
+
+  @property
+  def controller_status(self):
+    return self._get_val(self._current_message.dongle_controller_status)
+
+  @property
+  def platform_state(self):
+    return self._get_val(self._current_message.dongle_platform_state)
+  
+  @property
+  def platform_status(self):
+    return self._get_val(self._current_message.dongle_platform_status)
+
+  @property
+  def reset_reason(self):
+    return self._get_val(self._current_message.dongle_reset_reason)
 
   @property
   def controller_state_string(self):
@@ -779,10 +976,6 @@ class RTKMonitor(SubscriberMonitor):
         return "Invalid (%d)"
     else:
       return _DEFAULT_STR
-
-  @property
-  def signal_quality_string(self):
-    return self._get_string(self.signal_quality)
 
   @property
   def rtk_led_string(self):
