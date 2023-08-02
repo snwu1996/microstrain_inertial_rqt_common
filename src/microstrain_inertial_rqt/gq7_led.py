@@ -36,7 +36,7 @@ class GQ7LEDWidget(MicrostrainWidget):
     self._update_gq7_led()
     
   def _update_gq7_led(self):
-    self.gq7_led_status_label.setText(self._filter_status_monitor.filter_state_led_string)
+    self.gq7_led_status_label.setText(self._filter_status_monitor.filter_state_string)
     self.gq7_led_icon_label.setText(self._gq7_led_monitor.gq7_led_icon)
 
 
