@@ -11,9 +11,9 @@ class GQ7LEDWidget(MicrostrainWidget):
 
   def _configure(self):
     # Set up the subscriber status monitors
-    self._gnss_1_aiding_status_monitor = GNSSAidingStatusMonitor(self._node, self._node_name, "gnss1/aiding_status")
-    self._gnss_2_aiding_status_monitor = GNSSAidingStatusMonitor(self._node, self._node_name, "gnss2/aiding_status")
-    self._filter_status_monitor = FilterStatusMonitor(self._node, self._node_name, "nav/status", self._device_report_monitor)
+    self._gnss_1_aiding_status_monitor = GNSSAidingStatusMonitor(self._node, self._node_name, "mip/gnss_1/aiding_status")
+    self._gnss_2_aiding_status_monitor = GNSSAidingStatusMonitor(self._node, self._node_name, "mip/gnss_2/aiding_status")
+    self._filter_status_monitor = FilterStatusMonitor(self._node, self._node_name, "ekf/status", self._device_report_monitor)
 
     # Set up a special monitor for the GQ7 LED
     self._gq7_led_monitor = GQ7LedMonitor(self._filter_status_monitor, self._gnss_1_aiding_status_monitor, self._gnss_2_aiding_status_monitor)

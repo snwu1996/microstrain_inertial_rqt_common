@@ -22,7 +22,7 @@ class GNSSAidingStatusMonitor(SubscriberMonitor):
 
   @property
   def differential_corrections(self):
-    return self._get_val(self._current_message.status.differential_corrections)
+    return self._get_val(self._current_message.status.differential)
 
   @property
   def integer_fix(self):
